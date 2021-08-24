@@ -1,0 +1,62 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "npx typechain --target=ethers-v5 --out-dir ./src/generated './src/abi/*.json' && npx tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {},
+  "name": "liblido",
+   "description": "Lido Finance Contracts",
+  "author": "SEE CONTRIBUTORS",
+  "module": "dist/lido-lib.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/lido-lib.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/lido-lib.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@ethersproject/abi": "^5.4.0",
+    "@ethersproject/bytes": "^5.4.0",
+    "@ethersproject/contracts": "^5.4.1",
+    "@ethersproject/providers": "^5.4.4",
+    "@size-limit/preset-small-lib": "^5.0.3",
+    "@typechain/ethers-v5": "^7.0.1",
+    "@types/jest": "^27.0.1",
+    "ethers": "^5.4.5",
+    "gts": "^3.1.0",
+    "jest": "^27.0.6",
+    "size-limit": "^5.0.3",
+    "ts-jest": "^27.0.5",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typechain": "^5.1.2",
+    "typedoc": "^0.21.6",
+    "typedoc-neo-theme": "^1.1.1",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "@lido-sdk/constants": "^1.2.0",
+    "@lido-sdk/providers": "^1.2.0",
+    "tiny-invariant": "^1.1.0"
+  }
+}
