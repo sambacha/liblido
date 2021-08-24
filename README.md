@@ -1,103 +1,93 @@
-# TSDX User Guide
+# liblido
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+> modified fork of the lido-sdk/contracts package
 
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
+Contracts for Lido Finance projects.
+Part of [Lido JS SDK](https://github.com/lidofinance/lido-js-sdk/#readme)
 
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
+A Contract is an abstraction of code that has been deployed to the blockchain. A Contract may be sent transactions, which will trigger its code to be run with the input of the transaction data. More details in the [ethers docs](https://docs.ethers.io/v5/api/contract/contract/).
 
-## Commands
+It uses [TypeChain](https://github.com/ethereum-ts/TypeChain) under the hood to generate TypeScript typings for contacts.
 
-TSDX scaffolds your new library inside `/src`.
+- [Install](#install)
+- [Getters](#getters)
+  - [getERC20Contract](#geterc20contract)
+  - [getWSTETHContract](#getwstethcontract)
+  - [getSTETHContract](#getstethcontract)
+  - [getLDOContract](#getldocontract)
+- [Cache](#cache)
 
-To run TSDX, use:
+## Install
 
 ```bash
-npm start # or yarn start
+yarn add @lido-sdk/contracts
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+## Getters
 
-To do a one-off build, use `npm run build` or `yarn build`.
+[Source](src/contracts.ts)
 
-To run tests, use `npm test` or `yarn test`.
+Each getter returns a cached [Contract](https://docs.ethers.io/v5/api/contract/contract/#Contract--creating) instance with an attached [Provider](https://docs.ethers.io/v5/api/providers/) and an [ABI](https://docs.ethers.io/v5/api/utils/abi/). The Provider is required to work with the network and sign transactions and the ABI contains information about methods of the contract on the ethereum side. So, the resulting instance contains all the methods supported by the contract and allows you to call them.
 
-## Configuration
+_If a contract method requires signing a transaction, then you need a provider with [Signer](https://docs.ethers.io/v5/api/signer/)_
 
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
+### getERC20Contract
 
-### Jest
+Returns an instance of `Contract` based on [ERC20](https://eips.ethereum.org/EIPS/eip-20) standard contract ABI.
 
-Jest tests are set up to run with `npm test` or `yarn test`.
+```ts
+import { getERC20Contract } from '@lido-sdk/contracts';
+import { JsonRpcProvider } from '@ethersproject/providers';
 
-### Bundle Analysis
+const provider = new JsonRpcProvider('http://localhost:8545');
+const contract = getERC20Contract(
+  '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+  provider,
+);
 
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+const symbol = await contract.symbol();
+const decimals = await contract.decimals();
 ```
 
-### Rollup
+### getWSTETHContract
 
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
+Returns an instance of `Contract` based on wstETH contract [ABI](https://docs.ethers.io/v5/api/utils/abi/). Available contract methods and detailed documentation can be found here: https://docs.lido.fi/contracts/wsteth
 
-### TypeScript
+### getSTETHContract
 
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
+Returns an instance of `Contract` based on stETH contract [ABI](https://docs.ethers.io/v5/api/utils/abi/). Available contract methods and detailed documentation can be found here: https://docs.lido.fi/contracts/lido
 
-## Continuous Integration
+### getLDOContract
 
-### GitHub Actions
+Returns an instance of `Contract` based on LDO token [ABI](https://docs.ethers.io/v5/api/utils/abi/). LDO Token docs can be found here: https://docs.lido.fi/lido-dao/#ldo-token
 
-Two actions are added by default:
+## Cache
 
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
+To get another contract instance, getters have a third optional parameter `cacheSeed`.
 
-## Optimizations
+Calls without `cacheSeed` or with the same `cacheSeed` return the same contracts:
 
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
+```ts
+const contractFirst = getERC20Contract('0x0...', provider, 1);
+const contractSecond = getERC20Contract('0x0...', provider, 1);
 
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
+contractFirst === contractSecond; // true
 ```
 
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
+Calls with different `cacheSeed` return different contracts:
 
-## Module Formats
+```ts
+const contractFirst = getERC20Contract('0x0...', provider, 1);
+const contractSecond = getERC20Contract('0x0...', provider, 2);
 
-CJS, ESModules, and UMD module formats are supported.
+contractFirst !== contractSecond; // true
+```
 
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
+Of course, if the `cacheSeed` is the same, but `address` or `provider` are different the result contracts will also be different:
 
-## Named Exports
+```ts
+const contractFirst = getERC20Contract('0x1...', provider, 1);
+const contractSecond = getERC20Contract('0x0...', provider, 1);
 
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
-
-## Including Styles
-
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
+contractFirst !== contractSecond; // true, because the addresses are different
+```
